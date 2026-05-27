@@ -7,6 +7,8 @@ use engine::{optimal_item_level, WeightMode};
 use gpui::{prelude::*, *};
 use gpui_platform::application;
 use mcts::{run_mcts, MctsResult, TargetMode};
+use std::sync::mpsc;
+use std::time::Duration;
 use types::{Affix, ItemProfile, Mod, TargetMod};
 
 #[derive(Clone)]
@@ -36,6 +38,10 @@ struct IsengardApp {
     max_explicit_mods: u32,
     weight_mode: WeightMode,
     mcts_result: Option<MctsResult>,
+    mcts_running: bool,
+    mcts_generation: u64,
+    mcts_progress: f32,
+    mcts_status: String,
 }
 
 impl IsengardApp {
@@ -56,6 +62,10 @@ impl IsengardApp {
             max_explicit_mods: 2,
             weight_mode: WeightMode::Equal,
             mcts_result: None,
+            mcts_running: false,
+            mcts_generation: 0,
+            mcts_progress: 0.0,
+            mcts_status: String::new(),
         };
         app.select_defaults();
         app
@@ -158,6 +168,14 @@ impl IsengardApp {
         cx.notify();
     }
 
+    fn invalidate_mcts(&mut self) {
+        self.mcts_result = None;
+        self.mcts_running = false;
+        self.mcts_progress = 0.0;
+        self.mcts_status.clear();
+        self.mcts_generation = self.mcts_generation.wrapping_add(1);
+    }
+
     fn select_profile(&mut self, index: usize, cx: &mut Context<Self>) {
         if index >= self.profiles.len() {
             return;
@@ -165,7 +183,7 @@ impl IsengardApp {
         self.selected_profile = index;
         self.profile_dropdown_open = false;
         self.select_defaults();
-        self.mcts_result = None;
+        self.invalidate_mcts();
         cx.notify();
     }
 
@@ -174,7 +192,7 @@ impl IsengardApp {
             Affix::Prefix => self.selected_prefix = Some(index),
             Affix::Suffix => self.selected_suffix = Some(index),
         }
-        self.mcts_result = None;
+        self.invalidate_mcts();
         cx.notify();
     }
 
@@ -183,7 +201,7 @@ impl IsengardApp {
             Affix::Prefix => self.selected_prefix = None,
             Affix::Suffix => self.selected_suffix = None,
         }
-        self.mcts_result = None;
+        self.invalidate_mcts();
         cx.notify();
     }
 
@@ -205,40 +223,92 @@ impl IsengardApp {
             WeightMode::Equal => WeightMode::Visible,
             WeightMode::Visible => WeightMode::Equal,
         };
-        self.mcts_result = None;
+        self.invalidate_mcts();
         cx.notify();
     }
 
     fn set_target_mode(&mut self, mode: TargetMode, cx: &mut Context<Self>) {
         self.target_mode = mode;
-        self.mcts_result = None;
+        self.invalidate_mcts();
         cx.notify();
     }
 
     fn adjust_max_explicit_mods(&mut self, delta: i32, cx: &mut Context<Self>) {
         self.max_explicit_mods = (self.max_explicit_mods as i32 + delta).clamp(2, 6) as u32;
-        self.mcts_result = None;
+        self.invalidate_mcts();
         cx.notify();
     }
 
     fn run_mcts_search(&mut self, cx: &mut Context<Self>) {
-        let Some(profile) = self.profile() else { return; };
+        if self.mcts_running {
+            return;
+        }
+        let Some(profile) = self.profile().cloned() else { return; };
         let targets = self.targets();
         if targets.is_empty() {
             return;
         }
-        self.mcts_result = Some(run_mcts(
-            profile,
-            &targets,
-            self.target_mode,
-            self.max_explicit_mods,
-            self.weight_mode,
-            100_000,
-            6,
-            500_000,
-            500,
-        ));
+        let target_mode = self.target_mode;
+        let max_explicit_mods = self.max_explicit_mods;
+        let weight_mode = self.weight_mode;
+        let generation = self.mcts_generation;
+        self.mcts_running = true;
+        self.mcts_result = None;
+        self.mcts_progress = 0.02;
+        self.mcts_status = "Starting MCTS search...".to_string();
         cx.notify();
+
+        let (progress_tx, progress_rx) = mpsc::channel::<(f32, String)>();
+        let task = cx.background_spawn(async move {
+            run_mcts(
+                &profile,
+                &targets,
+                target_mode,
+                max_explicit_mods,
+                weight_mode,
+                100_000,
+                6,
+                500_000,
+                500,
+                move |progress, status| {
+                    let _ = progress_tx.send((progress, status));
+                },
+            )
+        });
+
+        cx.spawn(async move |this, cx| {
+            let task = task;
+            while !task.is_ready() {
+                cx.background_executor().timer(Duration::from_millis(250)).await;
+                this.update(cx, |this, cx| {
+                    if this.mcts_generation == generation && this.mcts_running {
+                        for (progress, status) in progress_rx.try_iter() {
+                            this.mcts_progress = progress.clamp(0.0, 1.0);
+                            this.mcts_status = status;
+                        }
+                        cx.notify();
+                    }
+                })
+                .ok();
+            }
+
+            let result = task.await;
+            this.update(cx, |this, cx| {
+                if this.mcts_generation == generation {
+                    for (progress, status) in progress_rx.try_iter() {
+                        this.mcts_progress = progress.clamp(0.0, 1.0);
+                        this.mcts_status = status;
+                    }
+                    this.mcts_result = Some(result);
+                    this.mcts_running = false;
+                    this.mcts_progress = 1.0;
+                    this.mcts_status = "Search and policy evaluation complete.".to_string();
+                }
+                cx.notify();
+            })
+            .ok();
+        })
+        .detach();
     }
 
     fn render_modifier_column(
@@ -344,6 +414,9 @@ impl Render for IsengardApp {
         } else {
             "MCTS is optimizing for selected modifiers while allowing extra random modifiers."
         };
+        let mcts_running = self.mcts_running;
+        let mcts_progress = self.mcts_progress.clamp(0.0, 1.0);
+        let mcts_status = self.mcts_status.clone();
         let weight_mode = match self.weight_mode {
             WeightMode::Equal => "Equal",
             WeightMode::Visible => "Visible weights",
@@ -566,17 +639,46 @@ impl Render for IsengardApp {
                     .hover(|style| style.bg(rgb(0x397f5b)))
                     .cursor_pointer()
                     .on_click(cx.listener(|this, _, _, cx| this.run_mcts_search(cx)))
-                    .child("Run MCTS search"),
+                    .child(if mcts_running { "MCTS running..." } else { "Run MCTS search" }),
             )
-            .when(self.mcts_result.is_none(), |el| {
+            .when(mcts_running, |el| {
+                el.child(
+                    div()
+                        .flex()
+                        .flex_col()
+                        .gap_2()
+                        .child(div().text_color(rgb(0x91a0b2)).child(mcts_status))
+                        .child(
+                            div()
+                                .w_full()
+                                .h(px(10.0))
+                                .rounded_md()
+                                .bg(rgb(0x101720))
+                                .child(
+                                    div()
+                                        .h(px(10.0))
+                                        .rounded_md()
+                                        .w(relative(mcts_progress))
+                                        .bg(rgb(0x2f6f4e)),
+                                ),
+                        )
+                        .child(div().text_color(rgb(0x91a0b2)).child("You can keep using the UI; changing inputs will discard this run.")),
+                )
+            })
+            .when(!mcts_running && self.mcts_result.is_none(), |el| {
                 el.child(div().text_color(rgb(0x91a0b2)).child("Run MCTS after selecting targets. Result is cleared when target, mode, cap, weapon, or weights change."))
             })
             .when_some(self.mcts_result.clone(), |el, result| {
-                let evaluation = result.evaluation.clone();
+                let evaluation = result.best_evaluation.clone();
                 let reliability = if evaluation.reliable {
                     "Final policy evaluation: reliable enough for ranking"
                 } else {
                     "Early policy evaluation: noisy, run more trials before trusting route ranking"
+                };
+                let winner = if result.mcts_won {
+                    "MCTS policy is currently best among evaluated candidates"
+                } else {
+                    "Best template route beats MCTS result; MCTS search did not find an improvement"
                 };
                 el.child(
                     div()
@@ -586,10 +688,8 @@ impl Render for IsengardApp {
                         .flex()
                         .flex_col()
                         .gap_1()
-                        .child(div().font_weight(FontWeight::BOLD).child(format!(
-                            "Best first action: {}",
-                            result.best_action.unwrap_or_else(|| "n/a".to_string())
-                        )))
+                        .child(div().font_weight(FontWeight::BOLD).child(format!("Best evaluated route: {}", evaluation.label)))
+                        .child(div().text_color(rgb(0x91a0b2)).child(winner))
                         .child(div().text_color(rgb(0x91a0b2)).child(reliability))
                         .child(div().child(format!("Evaluation attempts: {}", evaluation.attempts)))
                         .child(div().child(format!("Evaluation successes: {}", evaluation.successes)))
@@ -597,10 +697,36 @@ impl Render for IsengardApp {
                         .child(div().child(format!("Average attempt cost: {:.2} ex", evaluation.average_attempt_cost)))
                         .child(div().child(format!("Expected cost: {:.2} ex", evaluation.expected_cost)))
                         .child(div().text_color(rgb(0x91a0b2)).child(format!(
-                            "Search diagnostics: {} MCTS iterations, {} noisy search successes, {} states explored",
-                            result.iterations, result.successes, result.states_explored
+                            "MCTS diagnostics: first action {}, {} iterations, {} noisy search successes, {} states explored",
+                            result.best_action.unwrap_or_else(|| "n/a".to_string()), result.iterations, result.successes, result.states_explored
                         ))),
                 )
+                .child(
+                    div()
+                        .rounded_md()
+                        .bg(rgb(0x101720))
+                        .p_3()
+                        .flex()
+                        .flex_col()
+                        .gap_1()
+                        .child(div().font_weight(FontWeight::BOLD).child("MCTS policy evaluation"))
+                        .child(div().child(format!("Successes: {} / {}", result.mcts_evaluation.successes, result.mcts_evaluation.attempts)))
+                        .child(div().child(format!("Success chance: {:.4}%", result.mcts_evaluation.success_probability * 100.0)))
+                        .child(div().child(format!("Expected cost: {:.2} ex", result.mcts_evaluation.expected_cost))),
+                )
+                .children(result.baselines.into_iter().take(5).map(|baseline| {
+                    div()
+                        .rounded_md()
+                        .bg(rgb(0x101720))
+                        .p_3()
+                        .flex()
+                        .flex_col()
+                        .gap_1()
+                        .child(div().font_weight(FontWeight::BOLD).child(format!("Template: {}", baseline.label)))
+                        .child(div().child(format!("Successes: {} / {}", baseline.successes, baseline.attempts)))
+                        .child(div().child(format!("Success chance: {:.4}%", baseline.success_probability * 100.0)))
+                        .child(div().child(format!("Expected cost: {:.2} ex", baseline.expected_cost)))
+                }))
                 .children(result.policy.into_iter().map(|step| {
                     div()
                         .rounded_md()
