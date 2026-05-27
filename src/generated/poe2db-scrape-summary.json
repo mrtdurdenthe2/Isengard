@@ -1,0 +1,204 @@
+{
+  "scrapedAt": "2026-05-27T05:44:17.706Z",
+  "source": "https://poe2db.tw/us/Modifiers",
+  "pages": [
+    {
+      "id": "claws",
+      "itemClass": "claw",
+      "label": "Claws",
+      "url": "https://poe2db.tw/us/Claws#ModifiersCalc",
+      "title": "Claws",
+      "itemCount": 13,
+      "hasModsView": true,
+      "embeddedCalculatorBytes": 209070,
+      "generatedModifierCount": 153
+    },
+    {
+      "id": "daggers",
+      "itemClass": "dagger",
+      "label": "Daggers",
+      "url": "https://poe2db.tw/us/Daggers#ModifiersCalc",
+      "title": "Daggers",
+      "itemCount": 14,
+      "hasModsView": true,
+      "embeddedCalculatorBytes": 252837,
+      "generatedModifierCount": 161
+    },
+    {
+      "id": "wands",
+      "itemClass": "wand",
+      "label": "Wands",
+      "url": "https://poe2db.tw/us/Wands#ModifiersCalc",
+      "title": "Wands",
+      "itemCount": 13,
+      "hasModsView": true,
+      "embeddedCalculatorBytes": 260533,
+      "generatedModifierCount": 185
+    },
+    {
+      "id": "one_hand_swords",
+      "itemClass": "one_hand_sword",
+      "label": "One Hand Swords",
+      "url": "https://poe2db.tw/us/One_Hand_Swords#ModifiersCalc",
+      "title": "One Hand Swords",
+      "itemCount": 16,
+      "hasModsView": true,
+      "embeddedCalculatorBytes": 264701,
+      "generatedModifierCount": 161
+    },
+    {
+      "id": "one_hand_axes",
+      "itemClass": "one_hand_axe",
+      "label": "One Hand Axes",
+      "url": "https://poe2db.tw/us/One_Hand_Axes#ModifiersCalc",
+      "title": "One Hand Axes",
+      "itemCount": 13,
+      "hasModsView": true,
+      "embeddedCalculatorBytes": 257530,
+      "generatedModifierCount": 153
+    },
+    {
+      "id": "one_hand_maces",
+      "itemClass": "one_hand_mace",
+      "label": "One Hand Maces",
+      "url": "https://poe2db.tw/us/One_Hand_Maces#ModifiersCalc",
+      "title": "One Hand Maces",
+      "itemCount": 27,
+      "hasModsView": true,
+      "embeddedCalculatorBytes": 274293,
+      "generatedModifierCount": 153
+    },
+    {
+      "id": "sceptres",
+      "itemClass": "sceptre",
+      "label": "Sceptres",
+      "url": "https://poe2db.tw/us/Sceptres#ModifiersCalc",
+      "title": "Sceptres",
+      "itemCount": 16,
+      "hasModsView": true,
+      "embeddedCalculatorBytes": 185385,
+      "generatedModifierCount": 150
+    },
+    {
+      "id": "spears",
+      "itemClass": "spear",
+      "label": "Spears",
+      "url": "https://poe2db.tw/us/Spears#ModifiersCalc",
+      "title": "Spears",
+      "itemCount": 28,
+      "hasModsView": true,
+      "embeddedCalculatorBytes": 282327,
+      "generatedModifierCount": 166
+    },
+    {
+      "id": "flails",
+      "itemClass": "flail",
+      "label": "Flails",
+      "url": "https://poe2db.tw/us/Flails#ModifiersCalc",
+      "title": "Flails",
+      "itemCount": 13,
+      "hasModsView": true,
+      "embeddedCalculatorBytes": 264021,
+      "generatedModifierCount": 161
+    },
+    {
+      "id": "bows",
+      "itemClass": "bow",
+      "label": "Bows",
+      "url": "https://poe2db.tw/us/Bows#ModifiersCalc",
+      "title": "Bows",
+      "itemCount": 26,
+      "hasModsView": true,
+      "embeddedCalculatorBytes": 266734,
+      "generatedModifierCount": 141
+    },
+    {
+      "id": "staves",
+      "itemClass": "stave",
+      "label": "Staves",
+      "url": "https://poe2db.tw/us/Staves#ModifiersCalc",
+      "title": "Staves",
+      "itemCount": 16,
+      "hasModsView": true,
+      "embeddedCalculatorBytes": 254651,
+      "generatedModifierCount": 185
+    },
+    {
+      "id": "two_hand_swords",
+      "itemClass": "two_hand_sword",
+      "label": "Two Hand Swords",
+      "url": "https://poe2db.tw/us/Two_Hand_Swords#ModifiersCalc",
+      "title": "Two Hand Swords",
+      "itemCount": 14,
+      "hasModsView": true,
+      "embeddedCalculatorBytes": 252810,
+      "generatedModifierCount": 161
+    },
+    {
+      "id": "two_hand_axes",
+      "itemClass": "two_hand_axe",
+      "label": "Two Hand Axes",
+      "url": "https://poe2db.tw/us/Two_Hand_Axes#ModifiersCalc",
+      "title": "Two Hand Axes",
+      "itemCount": 13,
+      "hasModsView": true,
+      "embeddedCalculatorBytes": 258413,
+      "generatedModifierCount": 153
+    },
+    {
+      "id": "two_hand_maces",
+      "itemClass": "two_hand_mace",
+      "label": "Two Hand Maces",
+      "url": "https://poe2db.tw/us/Two_Hand_Maces#ModifiersCalc",
+      "title": "Two Hand Maces",
+      "itemCount": 26,
+      "hasModsView": true,
+      "embeddedCalculatorBytes": 274532,
+      "generatedModifierCount": 153
+    },
+    {
+      "id": "quarterstaves",
+      "itemClass": "quarterstave",
+      "label": "Quarterstaves",
+      "url": "https://poe2db.tw/us/Quarterstaves#ModifiersCalc",
+      "title": "Quarterstaves",
+      "itemCount": 27,
+      "hasModsView": true,
+      "embeddedCalculatorBytes": 324033,
+      "generatedModifierCount": 161
+    },
+    {
+      "id": "crossbows",
+      "itemClass": "crossbow",
+      "label": "Crossbows",
+      "url": "https://poe2db.tw/us/Crossbows#ModifiersCalc",
+      "title": "Crossbows",
+      "itemCount": 26,
+      "hasModsView": true,
+      "embeddedCalculatorBytes": 267009,
+      "generatedModifierCount": 147
+    },
+    {
+      "id": "traps",
+      "itemClass": "trap",
+      "label": "Traps",
+      "url": "https://poe2db.tw/us/Traps#ModifiersCalc",
+      "title": "Traps",
+      "itemCount": 13,
+      "hasModsView": true,
+      "embeddedCalculatorBytes": 107472,
+      "generatedModifierCount": 136
+    },
+    {
+      "id": "talismans",
+      "itemClass": "talisman",
+      "label": "Talismans",
+      "url": "https://poe2db.tw/us/Talismans#ModifiersCalc",
+      "title": "Talismans",
+      "itemCount": 25,
+      "hasModsView": true,
+      "embeddedCalculatorBytes": 278686,
+      "generatedModifierCount": 161
+    }
+  ]
+}

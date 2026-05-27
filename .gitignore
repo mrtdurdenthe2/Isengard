@@ -1,0 +1,6 @@
+dist/
+dist-node/
+dist-web/
+node_modules/
+repos/effect/
+target/
